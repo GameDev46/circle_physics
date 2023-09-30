@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>piCollide Documentation</title>
+	<link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+	<div class="documentation">
+
+		<h1>piCollide.js</h1>
+
+		<h2>Getting Started</h2>
+
+		<p>To use piCollide you will need to set your JavaScript file's type to module in the html file. For example if you
+			JavaScript file is called "script.js" then in the HTML file it would say:</p>
+
+		<pre class="code-area">
+&lt;script src="/script.js" type="module" &gt;&lt;/script&gt;
+</pre>
+
+		<p>Also you will need to add the piCollide.js file to your directory. Start by copying and pasting the code from
+			the <a href="/piCollide.js">piCollide.js file</a> into a file you create in your directory called "piCollide.js".
+		</p>
+
+		<h2>Setting Up a Scene</h2>
+
+		<p>To setup the physics engine you will first need to create the scene that it will be run in:</p>
+
+		<pre class="code-area">
+import { piCollide } from "/piCollide.js";
+			
+// Setup scene
+piCollide.setupScene("#FFFFFF");
+
+// Set gravity and drag
+piCollide.gravity = 9.81; // Default is 9.81
+			
+piCollide.drag = 0.99; // Default is 0.99
+</pre>
+
+		<p>The input on the setupScene() function determines the colour of the scene background. For example if it was
+			"#FFFFFF" the background would be white adn if it was "#000000" the background colour would be black</p>
+
+		<p>Drag determines how much of the balls energy is lost due to air resistance each frame, when set to 1 no energy is
+			lost and when set to 0 all the energy is lost meaning the balls will not move. I reccomend air resistance 0.99 for
+			regular gravity based physics simulations and an air resistance of 1 for gravity simulations for a more realistic
+			effect.</p>
+
+		<br>
+
+		<p>You can also choose to colour balls based on pressure or velocity to debug your simulation or make it more clear
+			as to what each object is doing. These settins are both turned off by default</p>
+
+		<pre class="code-area">
+// The more blue a ball is the higher the pressure there is on it
+piCollide.colourBasedOnPressure: true
+
+// The more red a ball is the faster it is moving
+piCollide.colourBasedOnVelocity: true
+</pre>
+
+		<h3>Creating the game loop</h3>
+
+		<p>In order for the physics engine to run it needs to be updated every frame allowing the balls to move and collide.
+			You can setup a basic game loop as shown below:</p>
+
+		<pre class="code-area">
+// Setup the game loop
+
+function worldUpdate() {
+
+	let delta = piCollide.calculateDelta();
+
+	piCollide.updatePhysics(delta); // Deals with collisions between the balls
+	piCollide.updatePositions(delta); // Updates the positions of the balls on the screen
+
+	piCollide.renderScene(); // Draws the objects to the screen
+
+	requestAnimationFrame(worldUpdate);
+
+}
+
+requestAnimationFrame(worldUpdate);
+</pre>
+
+		<h2>Spawning in a ball</h2>
+
+		<p>You can easily create and add objects to the scene as shown below:</p>
+
+		<pre class="code-area">
+// Spawn in circle
+
+// radius is the radius of the ball
+// mass is how heavy the ball is, the heavier it is the faster it falls
+// colour is the colour of the ball	
+// bounce is how much energy is kept after a collision (anything below 1 means energy is lost)
+			
+let circleObject = piCollide.circleGeometry({
+	radius: 10,
+	mass: 50,
+	colour: piCollide.rgba(255, 0, 0, 1),
+	bounce: 0.95
+});
+
+circleObject.position.set(100, 100);
+circleObject.velocity.set(100, 100);
+
+piCollide.addObject(circleObject);
+</pre>
+
+		<p>You can also create empty objects which can be used to store positions and velocities:</p>
+
+		<pre class="code-area">
+let emptyObject = piCollide.emptyObject();
+
+emptyObject.position.set(0, 0);
+emptyObject.velocity.set(0, 0);
+</pre>
+
+		<h3>Keeping the balls in a given area</h3>
+
+		<p>When creating a ball you can keep it in a given area by defining the area's top left corner (shown by the center
+			x and y values) and the length and height of the area (shown by the scale x and y values). It can also be toggled
+			by
+			setting active to true when you want it to affect the ball and false when you want the ball to move more freely.
+		</p>
+
+		<pre class="code-area">
+// Add a bounding box
+
+circleObject.boundingBox = {
+	active: true,
+	center: {
+		x: 0,
+		y: 0
+	},
+	scale: {
+		x: 100,
+		y: 100
+	}
+}
+</pre>
+
+		<p>You can also use piCollide to keep the balls in the screen area by setting the boundingBox's center to the origin
+			and setting its scale to the screen size like this:</p>
+
+		<pre class="code-area">
+// Add a bounding box
+
+circleObject.boundingBox = {
+	active: true,
+	center: {
+		x: 0,
+		y: 0
+	},
+	scale: {
+		x: piCollide.canvas.width,
+		y: piCollide.canvas.height
+	}
+}
+</pre>
+
+		<h3>Adding bloom</h3>
+
+		<p>You can also use a very basic post-processing system that is part of the ball object. Below is an example of how
+			to add bloom to a ball after it has been created:</p>
+
+		<pre class="code-area">
+// Strength is the alpha channel of the bloom, 1 is completely opaque and 0 is completely transparent
+// Diffuse is how far the bloom will reach, the greater the number the larger the area of bloom is
+
+circleObject.effects: {
+	bloom: {
+		strength: 0.2,
+		diffuse: 3
+	}
+}
+</pre>
+
+		<h2>Moving the Camera</h2>
+
+		<p>You can access and change the position of the camera in for more open environments or to allow the user to
+			explore a larger world:</p>
+
+		<pre class="code-area">
+piCollide.camera.position.x // default is 0
+piCollide.camera.position.y // default is 0
+			
+piCollide.camera.position.set(0, 0);
+</pre>
+
+		<h2>Keyboard and Mouse Input</h2>
+
+		<p>piCollide also offers the ability to listen for keyboard events, for example the code below will listen for when
+			the user is pressing the "W" key (Caps lock doesn't affect the output):</p>
+
+		<pre class="code-area">
+if (piCollide.keyboard["W"]) {
+	// User is pressing "W"
+}
+</pre>
+
+		<p>You can also access the user's global and local mouse position at any time:</p>
+
+		<pre class="code-area">
+// Mouses position relative to the camera (world position)
+
+piCollide.mouse.position.x
+piCollide.mouse.position.y
+
+// Mouses position relative to the canvas
+
+piCollide.mouse.localPosition.x
+piCollide.mouse.localPosition.y
+</pre>
+
+		<h2>Creating a Bridge</h2>
+
+		<p>piCollide has an inbuilt function for you to easily create particle based bridges which can interact with other
+			balls in the scene:</p>
+
+		<pre class="code-area">
+let bridges = [];
+
+// Create a regular ball to act as a bridge piece
+
+let bridgePiece = piCollide.circleGeometry({
+	radius: 3,
+	mass: 50,
+	colour: piCollide.rgba(255, 255, 255, 1),
+	bounce: 0.95
+});
+
+// Create a bridge out of the bridge piece
+
+// Length is how many times the bridge piece will be repeated
+// Spacing is the distance between each bridge piece 
+// Start position is the position that the bridge will be created from
+// Angle is the direction that the bridge will be created in (degrees)
+
+bridges.push(piCollide.createBridge({
+	piece: bridgePiece,
+	length: 40,
+	spacing: 7,
+	startPosition: { x: 200, y: 200 },
+	angle: 0
+}));
+</pre>
+
+		<p>However, to get the bridges working you will need to use piCollide to ass distance joints between each particle
+			by calling the distance joint update function in your game loop:</p>
+
+		<pre class="code-area">
+// Connect the particles in the bridge
+
+// The number 1.5 is the power of the rope joints
+// The higher the power the more tension there will be between the joints
+
+for (let x = 0; x &lt; bridges.length; x++) {
+	for (let y = 0; y &lt; bridges[x].length - 1; y++) {
+		piCollide.distanceJoint(bridges[x][y], bridges[x][y + 1], 1.5, delta);
+	}
+}	
+</pre>
+
+		<p>Now when you open the website the bridges should be working!</p>
+
+		<h2>Creating a Rope</h2>
+
+		<p>Ropes are made in a very similiar way to bridges:</p>
+
+		<pre class="code-area">
+let ropes = [];
+
+// Create a regular ball to act as a bridge piece
+
+let ropePiece = piCollide.circleGeometry({
+	radius: 3,
+	mass: 50,
+	colour: piCollide.rgba(255, 255, 255, 1),
+	bounce: 0.95
+});
+
+// Create a rope out of the rope piece
+
+// Length is how many particles long the rop will be
+// Spacing is the distance between each rope piece 
+// Start position is the position that the rope will hang from
+// Angle is the direction that the rope will be created in (degrees)
+
+ropes.push(piCollide.createBridge({
+	piece: ropePiece,
+	length: 40,
+	spacing: 7,
+	startPosition: { x: 200, y: 200 },
+	angle: 0
+}));
+</pre>
+
+		<p>If you want the rope to fall freely as opposed to hang from the top point you need to add the code below after
+			you create the rope:</p>
+
+		<pre class="code-area">
+ropes[ropes.length - 1][0].isKinematic = false;
+</pre>
+
+		<p>However, just like the bridges you will need to add the code below to your game loop to allow ropes to work (You
+			only need to add it once adn you can then add as many ropes with the code above as you want):</p>
+
+		<pre class="code-area">
+// Connect the particles in the ropes
+
+// The number 1.8 is the power of the rope joints
+// The higher the power the more tension there will be between the joints
+
+for (let x = 0; x &lt; ropes.length; x++) {
+	for (let y = 0; y &lt; ropes[x].length - 1; y++) {
+		piCollide.distanceJoint(ropes[x][y], ropes[x][y + 1], 1.8, delta);
+	}
+}	
+</pre>
+
+		<h2>Simulating Gravity</h2>
+
+		<p>You can also use piCollide to perform basic gravity simulations and have particles orbit and collide with one
+			another, to do this you would first need to set the drag to 1 and gravity to 0:</p>
+
+		<pre class="code-area">
+piCollide.drag = 1;
+piCollide.gravity = 0;
+</pre>
+
+		<p>Then in the game loop you would add:</p>
+
+		<pre class="code-area">
+// The Gravitational Constant determines how powerful the attraction between the balls is
+// The larger the number, the more powerful the attraction is
+			
+let gravitationalConstant = 0.001;
+	
+for (let x = 0; x &lt; piCollide.objects.length; x++) {
+	for (let y = 0; y &lt; piCollide.objects.length; y++) {
+		piCollide.attract(piCollide.objects[x], piCollide.objects[y], gravitationalConstant, delta);
+	}
+}
+</pre>
+
+		<p>Now whenever you create a ball object and add it to the scene it will simulate gravity between all the other
+			balls and by changing the balls velocity and their mass you can get them to orbit each other or even clump
+			together into larger planets.</p>
+
+	</div>
+
+</body>
+
+</html>

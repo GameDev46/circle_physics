@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Physics Experiment</title>
+	<link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+	<canvas id="scene"></canvas>
+
+	<div class="user-interface">
+		<label>Scene:</label>
+		<select id="sceneSelect">
+			<option value="1">Planet Simulation</option>
+			<option value="2" selected>Physics Playground</option>
+			<option value="3">Momentum Playground</option>
+			<option value="4">Particle Sandbox</option>
+			<option value="5">Dense Object Test</option>
+		</select>
+		<br>
+		<br>
+		<p>WASD to move the camera</p>
+		<p>Right click to attract circles</p>
+		<p>Left click to spawn in circles</p>
+	</div>
+
+	<a class="code-example" href="/documentation.html" target="_blank"><button>&lt;/&gt;</button></a>
+
+	<script src="script.js" type="module"></script>
+
+</body>
+
+</html>
