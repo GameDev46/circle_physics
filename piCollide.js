@@ -162,16 +162,12 @@ let piCollide = {
 		this.collisions = {};
 
 		for (let x = 0; x < this.objects.length; x++) {
-
 			// Apply gravity to object
 			this.objects[x].velocity.y += this.gravity * delta;
 
 			// Add on drag to velocities
 			for (let y = 0; y < this.objects.length; y++) {
-
-				if (x == y) {
-					continue;
-				}
+				if (x == y) continue;
 
 				let overlapCheckResult = this.computeOverlap(this.objects[x], this.objects[y]);
 
@@ -179,7 +175,6 @@ let piCollide = {
 					// Objects were overlapping
 
 					// Store each objects collision count
-
 					if (this.collisions[this.objects[y].ID] == null) {
 						this.collisions[this.objects[y].ID] = 0;
 					}
@@ -192,9 +187,7 @@ let piCollide = {
 					this.collisions[this.objects[x].ID] += 1;
 
 					// Caculate and apply momentum to each object
-
 					let obj1Vel = { x: this.objects[y].velocity.x * (this.objects[y].mass / this.objects[x].mass), y: this.objects[y].velocity.y * (this.objects[y].mass / this.objects[x].mass) };
-
 					let obj2Vel = { x: this.objects[x].velocity.x * (this.objects[x].mass / this.objects[y].mass), y: this.objects[x].velocity.y * (this.objects[x].mass / this.objects[y].mass) };
 
 					this.objects[x].velocity.x = obj1Vel.x * this.objects[x].bounce;
@@ -209,32 +202,23 @@ let piCollide = {
 
 	},
 	attract: function(obj1, obj2, gravitationalConst, delta) {
+		if (this.clock.isPaused) return;
+		
 		// Attract objects to a certain position
-
-		if (this.clock.isPaused) {
-			return;
-		}
-
 		let radians = Math.atan2(obj1.position.y - obj2.position.y, obj1.position.x - obj2.position.x);
-
-		let attractionForce = (gravitationalConst * ((obj2.mass * obj1.mass) / Math.max((obj1.minDistance || 0.01), this.distance(obj1, obj2) ^ 2))) * delta
+		let attractionForce = (gravitationalConst * obj2.mass * obj1.mass * delta) / Math.max( (obj1.minDistance || 0.01), this.distance(obj1, obj2) ^ 2)
 
 		obj1.velocity.x += Math.cos(radians) * (-attractionForce / obj1.mass);
 		obj1.velocity.y += Math.sin(radians) * (-attractionForce / obj1.mass);
 
 		obj2.velocity.x += Math.cos(radians) * (attractionForce / obj2.mass);
 		obj2.velocity.y += Math.sin(radians) * (attractionForce / obj2.mass);
-
 	},
 	attractOne: function(obj1, obj2, gravitationalConst, delta) {
+		if (this.clock.isPaused) return;
 		// Attract objects to a certain position
 
-		if (this.clock.isPaused) {
-			return;
-		}
-
 		if (gravitationalConst != 0) {
-
 			let radians = Math.atan2(obj1.position.y - obj2.position.y, obj1.position.x - obj2.position.x);
 
 			let closestDistance = 20;
@@ -253,10 +237,9 @@ let piCollide = {
 			let furthestAttractionDist = (-meetingPoint / (gravitationalConst * -30)) + largestAttractionDist;
 
 			if (dist > furthestAttractionDist) upwardLineEquation = 0;
-
 			if (dist < closestDistance) upwardLineEquation = 10 * (dist - closestDistance);
 
-			let attractionForce = (obj2.mass * obj1.mass) * upwardLineEquation * delta
+			let attractionForce = obj1.mass * obj2.mass * upwardLineEquation * delta
 
 			obj1.velocity.x += Math.cos(radians) * (-attractionForce / obj1.mass);
 			obj1.velocity.y += Math.sin(radians) * (-attractionForce / obj1.mass);
