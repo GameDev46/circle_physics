@@ -1,22 +1,3 @@
-/*
-
- _____                         ______                 ___   ____ 
-|  __ \                        |  _  \               /   | / ___|
-| |  \/  __ _  _ __ ___    ___ | | | |  ___ __   __ / /| |/ /___ 
-| | __  / _` || '_ ` _ \  / _ \| | | | / _ \\ \ / // /_| || ___ \
-| |_\ \| (_| || | | | | ||  __/| |/ / |  __/ \ V / \___  || \_/ |
- \____/ \__,_||_| |_| |_| \___||___/   \___|  \_/      |_/\_____/
-
-
-*/
-
-/* 
-	AUTHOR: GameDev46
-
-	Youtube: https://www.youtube.com/@gamedev46
-	Github: https://github.com/GameDev46
-*/
-
 let piCollide = {
 	objects: [],
 	gravity: 9.81,
@@ -55,7 +36,6 @@ let piCollide = {
 	},
 	setupScene: function(backgroundColour) {
 		// Get reference to canvas
-
 		this.background = backgroundColour;
 
 		this.canvas = document.getElementById("scene");
@@ -71,7 +51,6 @@ let piCollide = {
 		this.canvas.height = window.innerHeight;
 
 		// Add mouse event listeners - Computer
-
 		this.canvas.addEventListener("contextmenu", e => {
 			e.preventDefault();
 		})
@@ -102,7 +81,6 @@ let piCollide = {
 		})
 
 		// Add touch event listeners - mobile
-
 		this.canvas.addEventListener("touchstart", e => {
 			this.mouse.isDown[0] = true;
 
@@ -122,7 +100,6 @@ let piCollide = {
 		})
 
 		// Add key press event listeners
-
 		window.addEventListener("keydown", e => {
 			this.keyboard[e.key.toUpperCase()] = true;
 		})
@@ -145,11 +122,9 @@ let piCollide = {
 	},
 	computeOverlap: function(obj1, obj2) {
 		// Calculate if the objects are overllapping
-
 		let overlap = 99999;
 
 		// Only compute distance if object is next to object in grid
-
 		if (obj1.grid.x == obj2.grid.x || obj1.grid.x - 1 == obj2.grid.x || obj1.grid.x + 1 == obj2.grid.x) {
 			if (obj1.grid.y == obj2.grid.y || obj1.grid.y - 1 == obj2.grid.y || obj1.grid.y + 1 == obj2.grid.y) {
 
@@ -161,7 +136,6 @@ let piCollide = {
 
 		if (overlap < 0) {
 			// Objects are overlapping
-
 			let radians = Math.atan2(obj2.position.y - obj1.position.y, obj2.position.x - obj1.position.x)
 
 			if (obj1.isKinematic || obj2.isKinematic) overlap *= 2;
@@ -180,25 +154,19 @@ let piCollide = {
 		}
 
 		return { result: false, angle: null };
-
 	},
 	updatePhysics: function(delta) {
+		if (this.clock.isPaused) return;
+		
 		// Calculate the physics for each object in the scene
-
-		if (this.clock.isPaused) {
-			return;
-		}
-
 		this.collisions = {};
 
 		for (let x = 0; x < this.objects.length; x++) {
 
 			// Apply gravity to object
-
 			this.objects[x].velocity.y += this.gravity * delta;
 
 			// Add on drag to velocities
-
 			for (let y = 0; y < this.objects.length; y++) {
 
 				if (x == y) {
@@ -249,13 +217,51 @@ let piCollide = {
 
 		let radians = Math.atan2(obj1.position.y - obj2.position.y, obj1.position.x - obj2.position.x);
 
-		let attractionForce = Math.min((obj1.minDistance || 0), gravitationalConst * ((obj2.mass * obj1.mass) / this.distance(obj1, obj2) ^ 2)) * delta
+		let attractionForce = (gravitationalConst * ((obj2.mass * obj1.mass) / Math.max((obj1.minDistance || 0.01), this.distance(obj1, obj2) ^ 2))) * delta
 
-		obj1.velocity.x += Math.cos(radians) * -attractionForce * (obj2.mass / obj1.mass);
-		obj1.velocity.y += Math.sin(radians) * -attractionForce * (obj2.mass / obj1.mass);
+		obj1.velocity.x += Math.cos(radians) * (-attractionForce / obj1.mass);
+		obj1.velocity.y += Math.sin(radians) * (-attractionForce / obj1.mass);
 
-		obj2.velocity.x += Math.cos(radians) * attractionForce * (obj1.mass / obj2.mass);
-		obj2.velocity.y += Math.sin(radians) * attractionForce * (obj1.mass / obj2.mass);
+		obj2.velocity.x += Math.cos(radians) * (attractionForce / obj2.mass);
+		obj2.velocity.y += Math.sin(radians) * (attractionForce / obj2.mass);
+
+	},
+	attractOne: function(obj1, obj2, gravitationalConst, delta) {
+		// Attract objects to a certain position
+
+		if (this.clock.isPaused) {
+			return;
+		}
+
+		if (gravitationalConst != 0) {
+
+			let radians = Math.atan2(obj1.position.y - obj2.position.y, obj1.position.x - obj2.position.x);
+
+			let closestDistance = 20;
+			let largestAttractionDist = 65;
+
+			let dist = this.distance(obj1, obj2) ^ 2;
+			dist *= 2;
+
+			let getUpdwardLineEquation = xPos => { return (gravitationalConst * 10 * (xPos - closestDistance)); }
+
+			let upwardLineEquation = getUpdwardLineEquation(dist);
+			let meetingPoint = getUpdwardLineEquation(largestAttractionDist);
+
+			if (dist > largestAttractionDist) upwardLineEquation = (gravitationalConst * -30 * (dist - largestAttractionDist)) + meetingPoint;
+
+			let furthestAttractionDist = (-meetingPoint / (gravitationalConst * -30)) + largestAttractionDist;
+
+			if (dist > furthestAttractionDist) upwardLineEquation = 0;
+
+			if (dist < closestDistance) upwardLineEquation = 10 * (dist - closestDistance);
+
+			let attractionForce = (obj2.mass * obj1.mass) * upwardLineEquation * delta
+
+			obj1.velocity.x += Math.cos(radians) * (-attractionForce / obj1.mass);
+			obj1.velocity.y += Math.sin(radians) * (-attractionForce / obj1.mass);
+
+		}
 
 	},
 	distanceJoint: function(obj1, obj2, power, delta) {
@@ -290,16 +296,13 @@ let piCollide = {
 
 	},
 	updatePositions: function(delta) {
+		if (this.clock.isPaused) return;
+		
 		// Update the objects positions in the scene
-
-		if (this.clock.isPaused) {
-			return;
-		}
-
 		for (let x = 0; x < this.objects.length; x++) {
 
-			this.objects[x].velocity.x *= this.drag;
-			this.objects[x].velocity.y *= this.drag;
+			this.objects[x].velocity.x -= this.objects[x].velocity.x * delta * this.drag;
+			this.objects[x].velocity.y -= this.objects[x].velocity.y * delta * this.drag;
 
 			if (this.objects[x].isKinematic) {
 				this.objects[x].velocity.x = 0;
@@ -310,12 +313,10 @@ let piCollide = {
 			this.objects[x].position.y += this.objects[x].velocity.y * delta;
 
 			// Check if object is in a bounding box
-
 			let boundingData = this.objects[x].boundingBox;
 
 			if (boundingData.active == true) {
 				// Keep object in bounding box
-
 				this.objects[x].position.x = Math.max(this.objects[x].position.x, boundingData.center.x);
 				this.objects[x].position.x = Math.min(this.objects[x].position.x, boundingData.center.x + boundingData.scale.x);
 
@@ -330,16 +331,13 @@ let piCollide = {
 	},
 	renderScene: function() {
 		// Draw all the objects in the scene to the screen
-
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		this.ctx.fillStyle = this.background
 		this.ctx.fillRect(0, 0, this.canvas.width * 2, this.canvas.height * 2)
 
 		for (let x = 0; x < this.objects.length; x++) {
-
 			// Colour object based on velocity and pressure
-
 			let totalVel = Math.abs(this.objects[x].velocity.x) + Math.abs(this.objects[x].velocity.y);
 			let totalColl = this.collisions[this.objects[x].ID] || 0;
 
@@ -348,7 +346,6 @@ let piCollide = {
 			}
 
 			// Apply bloom if set
-
 			if (this.objects[x].effects != null) {
 				this.ctx.fillStyle = this.rgbaToString(this.objects[x].colour.r, this.objects[x].colour.g, this.objects[x].colour.b, this.objects[x].effects.bloom.strength);
 
@@ -362,13 +359,11 @@ let piCollide = {
 			this.ctx.beginPath();
 			this.ctx.arc(this.objects[x].position.x - this.camera.position.x, this.objects[x].position.y - this.camera.position.y, this.objects[x].radius, 0, 2 * Math.PI);
 			this.ctx.fill();
-
 		}
 	},
 	createBridge: function(ropeData) {
 
 		let ropePieces = [];
-
 		let radians = this.degreesToRadians(ropeData.angle);
 
 		for (let i = 0; i < ropeData.length; i++) {
@@ -396,16 +391,13 @@ let piCollide = {
 			bridgeChunk.position.set(ropeData.startPosition.x + (i * ropeData.spacing * Math.cos(radians)), ropeData.startPosition.y + (i * ropeData.spacing * Math.sin(radians)));
 
 			this.addObject(bridgeChunk);
-
 			ropePieces.push(bridgeChunk);
 		}
 
 		return ropePieces;
-
 	},
 	createRope: function(ropeData) {
 		let ropePieces = [];
-
 		let radians = this.degreesToRadians(ropeData.angle);
 
 		for (let i = 0; i < ropeData.length; i++) {
@@ -427,7 +419,6 @@ let piCollide = {
 			ropeChunk.position.set(ropeData.startPosition.x + (i * ropeData.spacing * Math.cos(radians)), ropeData.startPosition.y + (i * ropeData.spacing * Math.sin(radians)));
 
 			this.addObject(ropeChunk);
-
 			ropePieces.push(ropeChunk);
 		}
 
@@ -435,7 +426,6 @@ let piCollide = {
 	},
 	calculateDelta: function() {
 		// Use the last update to calculate the delta of the current frame
-
 		let timeDifference = Date.now() - this.clock.lastUpdate;
 		this.clock.lastUpdate = Date.now();
 		this.clock.FPS = Math.floor(1 / (timeDifference / 1000));
@@ -529,7 +519,6 @@ let piCollide = {
 		}
 
 		this.ID += 1;
-
 		return obj;
 	}
 }
