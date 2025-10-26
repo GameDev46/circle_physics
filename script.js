@@ -1,11 +1,9 @@
 import { piCollide } from "./piCollide.js";
 
 // Setup scene
-
 piCollide.setupScene("#131313");
 
 // Movement
-
 function processMovement(delta) {
 	let speed = 1000;
 
@@ -17,36 +15,24 @@ function processMovement(delta) {
 }
 
 function effectCircles(delta) {
-
 	if (piCollide.mouse.isDown[2]) {
-
 		for (let x = 0; x < piCollide.objects.length; x++) {
-
 			worldCenter.position.set(piCollide.mouse.position.x, piCollide.mouse.position.y);
 			piCollide.attract(worldCenter, piCollide.objects[x], 100, delta * 100);
-
 		}
-
 	}
 }
 
 let lastSpawnTime = 0;
 
 function spawnInBallsOnClick() {
-
 	if (piCollide.mouse.isDown[0]) {
 
-		if (Date.now() - lastSpawnTime < 50) {
-			return;
-		}
-
+		if (Date.now() - lastSpawnTime < 50) return;
 		lastSpawnTime = Date.now();
 
 		let r = (Math.random() + 1) * 2;
-
-		if (scene == 2 || scene == 3 || scene == 4) {
-			r = (Math.random() + 1) * 10;
-		}
+		if (scene == 2 || scene == 3 || scene == 4) r = (Math.random() + 1) * 10;
 
 		let circleObject = piCollide.circleGeometry({
 			radius: r,
@@ -74,7 +60,6 @@ function spawnInBallsOnClick() {
 			}
 
 			circleObject.mass = circleObject.radius * 2;
-
 		}
 
 		circleObject.position = piCollide.mouse.position;
@@ -86,11 +71,10 @@ function spawnInBallsOnClick() {
 }
 
 // Create objects
-
 let bridges = [];
 let ropes = [];
 
-let gravitationalConstant = 0.001;
+let gravitationalConstant = 0.1;
 
 let scene4BoundingBoxScale = {
 	x: piCollide.canvas.width,
@@ -159,7 +143,7 @@ function loadInScene(sceneID) {
 		ropes = [];
 
 		piCollide.gravity = 9.81;
-		piCollide.drag = 0.99;
+		piCollide.drag = 1;
 
 		piCollide.colourBasedOnPressure = false;
 		piCollide.colourBasedOnVelocity = false;
@@ -248,7 +232,7 @@ function loadInScene(sceneID) {
 		ropes = [];
 
 		piCollide.gravity = 9.81;
-		piCollide.drag = 0.99;
+		piCollide.drag = 1;
 
 		piCollide.colourBasedOnPressure = false;
 		piCollide.colourBasedOnVelocity = false;
@@ -308,7 +292,7 @@ function loadInScene(sceneID) {
 	} else if (scene == 4) {
 
 		piCollide.gravity = 9.81;
-		piCollide.drag = 0.99;
+		piCollide.drag = 1;
 
 		piCollide.colourBasedOnPressure = false;
 		piCollide.colourBasedOnVelocity = false;
@@ -339,7 +323,6 @@ function loadInScene(sceneID) {
 
 		}
 	} else if (scene == 5) {
-
 		// Planet formation simulation
 
 		piCollide.gravity = 0;
@@ -413,7 +396,6 @@ function loadInScene(sceneID) {
 		denseObject.minDistance = 0;
 
 		piCollide.addObject(denseObject);
-
 	}
 
 }
@@ -422,7 +404,6 @@ function loadInScene(sceneID) {
 
 document.getElementById("sceneSelect").addEventListener("change", e => {
 	let scene = Number(document.getElementById("sceneSelect").value);
-
 	piCollide.objects = [];
 	loadInScene(scene);
 })
@@ -437,7 +418,6 @@ function scene1Physics(delta) {
 
 function scene2Physics(delta) {
 	// Connect the particles in the bridge
-
 	for (let x = 0; x < bridges.length; x++) {
 		for (let y = 0; y < bridges[x].length - 1; y++) {
 			piCollide.distanceJoint(bridges[x][y], bridges[x][y + 1], 1.5, delta);
@@ -445,7 +425,6 @@ function scene2Physics(delta) {
 	}
 
 	// Connect the particles in the rope
-
 	for (let x = 0; x < ropes.length; x++) {
 		for (let y = 0; y < ropes[x].length - 1; y++) {
 			piCollide.distanceJoint(ropes[x][y], ropes[x][y + 1], 1.8, delta);
@@ -456,7 +435,6 @@ function scene2Physics(delta) {
 
 function scene3Physics(delta) {
 	// Connect the particles in the bridge
-
 	for (let x = 0; x < bridges.length; x++) {
 		for (let y = 0; y < bridges[x].length - 1; y++) {
 			piCollide.distanceJoint(bridges[x][y], bridges[x][y + 1], 1.5, delta);
@@ -474,7 +452,6 @@ function scene5Physics(delta) {
 }
 
 // Game loop
-
 loadInScene(2)
 
 let worldCenter = piCollide.emptyObject();
@@ -488,7 +465,6 @@ let physicsSubSteps = [0, 1, 2, 2, 3, 1];
 function worldUpdate() {
 
 	let delta = piCollide.calculateDelta();
-
 	delta = delta / physicsSubSteps[scene];
 
 	processMovement(delta);
